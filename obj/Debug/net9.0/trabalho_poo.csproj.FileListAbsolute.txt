@@ -76,3 +76,4 @@ C:\FATEC FUKUTA\trabalho_poo\obj\Debug\net9.0\ref\trabalho_poo.dll
 C:\FATEC FUKUTA\trabalho_poo\obj\Debug\net9.0\compressed\mfx9o90ohu-z5fu51tbta.gz
 C:\FATEC FUKUTA\trabalho_poo\obj\Debug\net9.0\compressed\otbdzlugti-3jqewr9u7f.gz
 C:\FATEC FUKUTA\trabalho_poo\obj\Debug\net9.0\compressed\d6we3ba3qd-3jqewr9u7f.gz
+C:\FATEC FUKUTA\trabalho_poo\obj\Debug\net9.0\trabalho_poo.sourcelink.json
