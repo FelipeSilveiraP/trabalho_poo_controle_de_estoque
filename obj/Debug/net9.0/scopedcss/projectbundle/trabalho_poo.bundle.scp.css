@@ -1,0 +1,289 @@
+/* _content/trabalho_poo/Components/Layout/MainLayout.razor.rz.scp.css */
+.page[b-0l70j2uopd] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main[b-0l70j2uopd] {
+    flex: 1;
+}
+
+@media (max-width: 991.98px) {
+    main[b-0l70j2uopd] {
+        padding-top: 4rem; /* Impede que a barra fixa cubra o topo do conteúdo */
+    }
+}
+
+.sidebar[b-0l70j2uopd] {
+    z-index: 1060;
+}
+
+.top-row[b-0l70j2uopd] {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    justify-content: flex-end;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+}
+
+    .top-row[b-0l70j2uopd]  a, .top-row[b-0l70j2uopd]  .btn-link {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+        text-decoration: none;
+    }
+
+    .top-row[b-0l70j2uopd]  a:hover, .top-row[b-0l70j2uopd]  .btn-link:hover {
+        text-decoration: underline;
+    }
+
+    .top-row[b-0l70j2uopd]  a:first-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+@media (max-width: 991.98px) {
+    .top-row[b-0l70j2uopd] {
+        justify-content: space-between;
+    }
+
+    .top-row[b-0l70j2uopd]  a, .top-row[b-0l70j2uopd]  .btn-link {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 992px) {
+    .page[b-0l70j2uopd] {
+        flex-direction: row;
+    }
+
+    .sidebar[b-0l70j2uopd] {
+        width: 250px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        z-index: 1040;
+    }
+
+    .top-row[b-0l70j2uopd] {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .top-row.auth[b-0l70j2uopd]  a:first-child {
+        flex: 1;
+        text-align: right;
+        width: 0;
+    }
+
+    .top-row[b-0l70j2uopd], article[b-0l70j2uopd] {
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+#blazor-error-ui[b-0l70j2uopd] {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss[b-0l70j2uopd] {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+/* _content/trabalho_poo/Components/Layout/NavMenu.razor.rz.scp.css */
+.navbar-toggler-custom[b-2bfso9id5v] {
+    background-color: transparent;
+    border: none;
+    width: 35px;
+    height: 25px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.navbar-toggler-custom span[b-2bfso9id5v] {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.navbar-toggler-custom.open span:nth-child(1)[b-2bfso9id5v] {
+    transform: translateY(11px) rotate(45deg);
+}
+
+.navbar-toggler-custom.open span:nth-child(2)[b-2bfso9id5v] {
+    opacity: 0;
+}
+
+.navbar-toggler-custom.open span:nth-child(3)[b-2bfso9id5v] {
+    transform: translateY(-11px) rotate(-45deg);
+}
+
+.top-row[b-2bfso9id5v] {
+    min-height: 4rem;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.navbar-brand[b-2bfso9id5v] {
+    font-size: 1.1rem;
+}
+
+.bi[b-2bfso9id5v] {
+    display: inline-block;
+    position: relative;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    top: -1px;
+    background-size: cover;
+}
+
+.nav-item[b-2bfso9id5v] {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+}
+
+.nav-item:first-of-type[b-2bfso9id5v] {
+    padding-top: 1rem;
+}
+
+.nav-item:last-of-type[b-2bfso9id5v] {
+    padding-bottom: 1rem;
+}
+
+.nav-item[b-2bfso9id5v]  .nav-link {
+    color: #d7d7d7;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    line-height: 3rem;
+    width: 100%;
+}
+
+.nav-item[b-2bfso9id5v]  a.active {
+    background-color: rgba(255,255,255,0.37);
+    color: white;
+}
+
+.nav-item[b-2bfso9id5v]  .nav-link:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.collapse[b-2bfso9id5v] {
+    display: none;
+}
+
+/* Fundo escurecido atrás do menu */
+.mobile-overlay[b-2bfso9id5v] {
+    position: fixed;
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh;
+    background-color: rgba(0,0,0,0.6);
+    z-index: 1040;
+    display: none;
+}
+.mobile-overlay.open[b-2bfso9id5v] {
+    display: block;
+}
+
+/* Menu Lateral Mobile (Deslizante) */
+.nav-scrollable-container[b-2bfso9id5v] {
+    position: fixed;
+    top: 0;
+    left: -260px; /* Escondido fora da tela */
+    width: 250px;
+    height: 100vh;
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%); /* Cor roxa original do Blazor restaurada */
+    z-index: 1050;
+    transition: left 0.3s ease-in-out;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    padding-top: 4rem; /* Espaço pro logo */
+    overflow-y: auto; /* Permite scroll no menu mobile */
+    overflow-x: hidden;
+}
+
+.nav-scrollable-container.open[b-2bfso9id5v] {
+    left: 0; /* Desliza para dentro da tela */
+}
+
+.top-navbar-mobile[b-2bfso9id5v] {
+    background-color: rgb(5, 39, 103) !important; /* Para a barra superior combinar com o topo do gradient */
+    position: fixed;
+    width: 100%;
+    z-index: 1060;
+}
+
+.logout-container[b-2bfso9id5v] {
+    margin-top: 1rem; /* Closer on mobile */
+    padding: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+@media (min-width: 992px) {
+    .navbar-toggler-custom[b-2bfso9id5v] {
+        display: none;
+    }
+
+    .mobile-overlay[b-2bfso9id5v] {
+        display: none !important;
+    }
+
+    .top-navbar-mobile[b-2bfso9id5v] {
+        position: static;
+        background-color: transparent !important;
+    }
+
+    .nav-content[b-2bfso9id5v] {
+        height: 100%; /* No PC, ocupa a altura toda para empurrar o Sair */
+    }
+
+    .nav-scrollable-container[b-2bfso9id5v] {
+        /* No PC, volta a ser estático dentro da sidebar */
+        position: static;
+        width: 100%;
+        height: calc(100vh - 4rem);
+        background-image: none;
+        border-right: none;
+        padding-top: 0;
+        left: 0;
+        overflow-y: auto;
+    }
+
+    .collapse[b-2bfso9id5v] {
+        /* Never collapse the sidebar for wide screens */
+        display: block;
+    }
+
+    .logout-container[b-2bfso9id5v] {
+        margin-top: auto; /* Pushes to absolute bottom on desktop */
+    }
+}

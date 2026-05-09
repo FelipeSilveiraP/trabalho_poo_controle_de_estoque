@@ -1,0 +1,203 @@
+@page "/dashboard"
+@inject trabalho_poo.Services.EstoqueService EstoqueService
+@inject NavigationManager Navigation
+@using trabalho_poo.Models
+
+<PageTitle>Dashboard - SmartEstoque</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Visão Geral do Estoque</h2>
+    <button class="btn-primary" @onclick='() => Navigation.NavigateTo("/cadastro-produto")'>
+        <span class="bi bi-plus-lg"></span> Cadastrar Produtos
+    </button>
+</div>
+
+@if (!EstoqueService.IsLogado)
+{
+    <p>Acesso Negado.</p>
+    return;
+}
+
+<!-- Cards de Resumo -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card" style="border-left: 4px solid var(--accent);">
+            <h5 style="color: var(--text-secondary); margin-bottom: 5px;">Total de Produtos</h5>
+            <h2 style="margin: 0;">@EstoqueService.Produtos.Count</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card" style="border-left: 4px solid var(--warning);">
+            <h5 style="color: var(--text-secondary); margin-bottom: 5px;">Abaixo do Nível (40%)</h5>
+            <h2 style="margin: 0;">@ProdutosComAviso.Count</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card" style="border-left: 4px solid var(--danger);">
+            <h5 style="color: var(--text-secondary); margin-bottom: 5px;">Nível Crítico (10%)</h5>
+            <h2 style="margin: 0;">@ProdutosCriticos.Count</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas Instanciados via Herança e Classe Abstrata -->
+@if (ProdutosComAviso.Count > 0)
+{
+    var alertaExemplo = new AlertaAviso() { ProdutoReferencia = ProdutosComAviso.First() };
+    
+    <div class="alert-custom alert-warning-custom" @onclick='() => Navigation.NavigateTo("/produtos-criticos")'>
+        <span class="bi bi-exclamation-triangle-fill" style="font-size: 1.5rem;"></span>
+        <div>
+            <strong>Atenção!</strong> Seu estoque de @ProdutosComAviso.Count produto(s) está abaixo do nível. 
+            <em>(@alertaExemplo.Exibir())</em><br />
+            <u>Clique aqui e veja quais são estes produtos</u>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <h4 style="margin-bottom: 20px;">Lista Rápida (Todos)</h4>
+    @if (EstoqueService.Produtos.Count == 0)
+    {
+        <p style="color: var(--text-secondary);">Nenhum produto cadastrado no estoque.</p>
+    }
+    else
+    {
+        <table class="table-dark">
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th>Quantidade</th>
+                    <th>Teto</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in EstoqueService.Produtos)
+                {
+                    string statusStr = p.ValidarEstoque();
+                    string badgeClass = statusStr == "CRITICO" ? "badge-danger" : (statusStr == "AVISO" ? "badge-warning" : "badge-success");
+
+                    <tr>
+                        <td>@p.Descricao</td>
+                        <td>@p.Tipo</td>
+                        <td>@p.Quantidade</td>
+                        <td>@p.TetoPermitido</td>
+                        <td><span class="@badgeClass">@statusStr</span></td>
+                        <td style="display: flex; gap: 5px;">
+                            <button class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" @onclick:stopPropagation="true" @onclick='() => Navigation.NavigateTo($"/produto/{p.Id}")'>Detalhes</button>
+                            <button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" @onclick:stopPropagation="true" @onclick="() => ConfirmarExclusaoProduto(p)">🗑️</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<!-- Pop-up Modal de Nível Crítico (RN06) -->
+@if (mostrarPopupCritico && produtoCriticoParaExibir != null)
+{
+    var alertaCrit = new AlertaCritico() { ProdutoReferencia = produtoCriticoParaExibir };
+    
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <span class="bi bi-x-octagon-fill" style="color: var(--danger); font-size: 3rem; margin-bottom: 15px; display: inline-block;"></span>
+            <h3 style="color: var(--danger);">Estoque Crítico!</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 25px;">@alertaCrit.Exibir()</p>
+            <button class="btn-danger" style="width: 100%; padding: 12px; font-size: 1.1rem;" @onclick="FecharPopupCritico">Estou ciente</button>
+        </div>
+    </div>
+}
+
+<!-- Pop-up de Confirmação de Exclusão de Produto -->
+@if (produtoParaExcluir != null)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <span style="font-size: 3rem; margin-bottom: 15px; display: inline-block;">🗑️</span>
+            <h3>Excluir Produto</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 25px;">Tem certeza que deseja excluir o produto "@produtoParaExcluir.Descricao"? Todo o histórico será perdido.</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <button class="btn btn-secondary" style="width: 45%;" @onclick="CancelarExclusao">Não</button>
+                <button class="btn-danger" style="width: 45%;" @onclick="ExcluirProduto">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Produto> ProdutosComAviso = new();
+    private List<Produto> ProdutosCriticos = new();
+    private List<Produto> ProdutosCriticosNaoReconhecidos = new();
+
+    private bool mostrarPopupCritico = false;
+    private Produto? produtoCriticoParaExibir;
+    private Produto? produtoParaExcluir = null;
+
+    protected override void OnInitialized()
+    {
+        if (!EstoqueService.IsLogado)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        AtualizarListas();
+
+        // RN06: Só exibe popup para produtos críticos que AINDA NÃO foram reconhecidos nesta sessão
+        ProdutosCriticosNaoReconhecidos = ProdutosCriticos
+            .Where(p => !EstoqueService.AlertasCriticosReconhecidos.Contains(p.Id))
+            .ToList();
+
+        if (ProdutosCriticosNaoReconhecidos.Any())
+        {
+            produtoCriticoParaExibir = ProdutosCriticosNaoReconhecidos.First();
+            mostrarPopupCritico = true;
+        }
+    }
+
+    private void AtualizarListas()
+    {
+        ProdutosComAviso = EstoqueService.Produtos.Where(p => p.ValidarEstoque() == "AVISO" || p.ValidarEstoque() == "CRITICO").ToList();
+        ProdutosCriticos = EstoqueService.Produtos.Where(p => p.ValidarEstoque() == "CRITICO").ToList();
+    }
+
+    private void FecharPopupCritico()
+    {
+        mostrarPopupCritico = false;
+
+        // Marca como reconhecido — não vai aparecer de novo nesta sessão
+        EstoqueService.AlertasCriticosReconhecidos.Add(produtoCriticoParaExibir!.Id);
+
+        // Avança para o próximo não reconhecido, se houver
+        ProdutosCriticosNaoReconhecidos.Remove(produtoCriticoParaExibir!);
+        if (ProdutosCriticosNaoReconhecidos.Any())
+        {
+            produtoCriticoParaExibir = ProdutosCriticosNaoReconhecidos.First();
+            mostrarPopupCritico = true;
+        }
+    }
+
+    private void ConfirmarExclusaoProduto(Produto p)
+    {
+        produtoParaExcluir = p;
+    }
+
+    private void CancelarExclusao()
+    {
+        produtoParaExcluir = null;
+    }
+
+    private void ExcluirProduto()
+    {
+        if (produtoParaExcluir != null)
+        {
+            EstoqueService.Produtos.Remove(produtoParaExcluir);
+            AtualizarListas();
+            produtoParaExcluir = null;
+        }
+    }
+}

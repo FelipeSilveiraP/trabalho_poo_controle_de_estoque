@@ -1,0 +1,292 @@
+@page "/cadastro-produto"
+@inject trabalho_poo.Services.EstoqueService EstoqueService
+@inject NavigationManager Navigation
+@using trabalho_poo.Models
+@using System.Linq
+
+<PageTitle>Cadastrar Produtos - SmartEstoque</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Cadastrar Produtos</h2>
+    <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/dashboard")'>
+        <span class="bi bi-arrow-left"></span> Voltar
+    </button>
+</div>
+
+@if (!EstoqueService.IsLogado)
+{
+    <p>Acesso Negado.</p>
+    return;
+}
+
+<div class="card mb-4">
+    <div class="d-flex gap-3">
+        <button class="btn @(modoCadastro == "NOVO" ? "btn-primary" : "btn-secondary")" style="flex: 1;" @onclick='() => SetModo("NOVO")'>
+            Cadastrar novos produtos
+        </button>
+        <button class="btn @(modoCadastro == "EXISTENTE" ? "btn-primary" : "btn-secondary")" style="flex: 1;" @onclick='() => SetModo("EXISTENTE")'>
+            Cadastrar produto já salvo
+        </button>
+    </div>
+</div>
+
+@if (modoCadastro == "NOVO")
+{
+    <div class="card">
+        <h4>Novo Produto</h4>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="form-label">Fornecedor (Razão Social)</label>
+                <input class="form-control" @bind="novoFornecedor" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">CNPJ Fornecedor</label>
+                <input class="form-control" @bind="novoCNPJ" oninput="maskCnpj(this)" maxlength="18" placeholder="00.000.000/0000-00" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Descrição do Produto</label>
+                <input class="form-control" @bind="novaDescricao" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Tipo de Produto</label>
+                <input class="form-control" @bind="novoTipo" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Quantidade Comprada</label>
+                <input type="number" class="form-control" @bind="novaQuantidade" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Valor Total da Compra</label>
+                <input type="number" class="form-control" @bind="novoValorTotal" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Teto Permitido em Estoque</label>
+                <input type="number" class="form-control" @bind="novoTeto" />
+            </div>
+        </div>
+        <div class="mt-3 text-end">
+            <button class="btn-primary" @onclick="ConfirmarNovoSalvar">Salvar Produto</button>
+        </div>
+    </div>
+}
+else if (modoCadastro == "EXISTENTE")
+{
+    <div class="card">
+        <h4>Produto Já Salvo</h4>
+
+        @if (produtoSelecionado == null)
+        {
+            <div class="mb-3 mt-3">
+                <label class="form-label">Busca (Live Share / Live Search)</label>
+                <input type="text" class="form-control" placeholder="Buscar por descrição..." @bind="buscaExistente" @bind:event="oninput" />
+            </div>
+
+            <table class="table-dark">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Tipo</th>
+                        <th>Estoque Atual</th>
+                        <th>Teto</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in FiltrarExistentes())
+                    {
+                        <tr>
+                            <td>@p.Descricao</td>
+                            <td>@p.Tipo</td>
+                            <td>@p.Quantidade</td>
+                            <td>@p.TetoPermitido</td>
+                            <td>
+                                <button class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" @onclick="() => SelecionarProduto(p)">
+                                    Selecionar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert-custom alert-warning-custom mb-4">
+                <strong>Produto Selecionado:</strong> @produtoSelecionado.Descricao (@produtoSelecionado.Tipo) - 
+                Estoque atual: @produtoSelecionado.Quantidade / @produtoSelecionado.TetoPermitido
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Novo Fornecedor</label>
+                    <input class="form-control" @bind="novoFornecedor" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Novo CNPJ</label>
+                    <input class="form-control" @bind="novoCNPJ" oninput="maskCnpj(this)" maxlength="18" placeholder="00.000.000/0000-00" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Quantidade Comprada</label>
+                    <input type="number" class="form-control" @bind="novaQuantidade" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Valor Total da Compra</label>
+                    <input type="number" class="form-control" @bind="novoValorTotal" />
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2 justify-content-end">
+                <button class="btn btn-secondary" @onclick="CancelarSelecao">Cancelar</button>
+                <button class="btn-primary" @onclick="ConfirmarExistenteSalvar">Confirmar Salvamento</button>
+            </div>
+        }
+    </div>
+}
+
+<!-- Modal de Confirmação de Salvamento Novo -->
+@if (mostrarPopupConfirmacaoNovo)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <span class="bi bi-question-circle" style="color: var(--accent); font-size: 3rem; margin-bottom: 15px; display: inline-block;"></span>
+            <h3>Confirmar Salvamento</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 25px;">Deseja que o produto "@novaDescricao" seja salvo no estoque?</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <button class="btn btn-secondary" style="width: 45%;" @onclick="CancelarSalvamento">Não</button>
+                <button class="btn-primary" style="width: 45%;" @onclick="EfetivarSalvarNovo">Sim, Salvar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string modoCadastro = "NOVO";
+
+    // Campos
+    private string novoFornecedor = "";
+    private string novoCNPJ = "";
+    private string novaDescricao = "";
+    private string novoTipo = "";
+    private int novaQuantidade = 0;
+    private decimal novoValorTotal = 0;
+    private int novoTeto = 0;
+
+    // Fluxo Existente
+    private string buscaExistente = "";
+    private Produto? produtoSelecionado = null;
+
+    // Popups
+    private bool mostrarPopupConfirmacaoNovo = false;
+
+    private void SetModo(string modo)
+    {
+        modoCadastro = modo;
+        LimparFormulario();
+        produtoSelecionado = null;
+    }
+
+    private void LimparFormulario()
+    {
+        novoFornecedor = ""; novoCNPJ = ""; novaDescricao = ""; novoTipo = "";
+        novaQuantidade = 0; novoValorTotal = 0; novoTeto = 0;
+    }
+
+    private IEnumerable<Produto> FiltrarExistentes()
+    {
+        if (string.IsNullOrWhiteSpace(buscaExistente)) return EstoqueService.Produtos;
+        return EstoqueService.Produtos.Where(p => p.Descricao.Contains(buscaExistente, System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void SelecionarProduto(Produto p)
+    {
+        produtoSelecionado = p;
+        // RN08: Bloqueia se já tiver 100% de capacidade
+        if (produtoSelecionado.Quantidade >= produtoSelecionado.TetoPermitido)
+        {
+            produtoSelecionado = null;
+            // ideal: exibir toast error "Produto já está com 100% da capacidade."
+        }
+    }
+
+    private void CancelarSelecao()
+    {
+        produtoSelecionado = null;
+        LimparFormulario();
+    }
+
+    // --- SALVAR NOVO ---
+    private void ConfirmarNovoSalvar()
+    {
+        if (string.IsNullOrWhiteSpace(novaDescricao) || novoTeto <= 0) return;
+        mostrarPopupConfirmacaoNovo = true;
+    }
+
+    private void CancelarSalvamento()
+    {
+        mostrarPopupConfirmacaoNovo = false;
+    }
+
+    private void EfetivarSalvarNovo()
+    {
+        mostrarPopupConfirmacaoNovo = false;
+
+        // Instanciação e Herança em POO
+        Produto p = new Produto()
+        {
+            Descricao = novaDescricao,
+            Tipo = novoTipo,
+            UltimoFornecedor = novoFornecedor,
+            UltimoFornecedorCNPJ = novoCNPJ,
+            Quantidade = novaQuantidade,
+            TetoPermitido = novoTeto
+        };
+
+        // Adiciona a primeira operação (Compra)
+        if (novaQuantidade > 0)
+        {
+            var compra = new Compra()
+            {
+                Fornecedor = novoFornecedor,
+                FornecedorCNPJ = novoCNPJ,
+                Quantidade = novaQuantidade,
+                ValorUnitario = novoValorTotal / novaQuantidade
+            };
+            p.HistoricoOperacoes.Add(compra);
+            p.CalcularCustoMedio();
+        }
+
+        // Chama método virtual da classe base
+        p.Salvar(EstoqueService.Produtos);
+
+        Navigation.NavigateTo("/dashboard");
+    }
+
+    // --- SALVAR EXISTENTE ---
+    private void ConfirmarExistenteSalvar()
+    {
+        if (produtoSelecionado == null || novaQuantidade <= 0) return;
+
+        // Instanciação do tipo ProdutoExistente que usa Override
+        ProdutoExistente pe = new ProdutoExistente()
+        {
+            Id = produtoSelecionado.Id, // Referencia o mesmo ID
+            Quantidade = novaQuantidade,
+            UltimoFornecedor = novoFornecedor,
+            UltimoFornecedorCNPJ = novoCNPJ
+        };
+
+        var compra = new Compra()
+        {
+            Fornecedor = novoFornecedor,
+            FornecedorCNPJ = novoCNPJ,
+            Quantidade = novaQuantidade,
+            ValorUnitario = novoValorTotal / novaQuantidade
+        };
+        pe.HistoricoOperacoes.Add(compra);
+
+        // Polimorfismo: o método Salvar de ProdutoExistente não vai adicionar na lista, vai atualizar
+        pe.Salvar(EstoqueService.Produtos);
+
+        Navigation.NavigateTo("/dashboard");
+    }
+}

@@ -1,0 +1,202 @@
+@page "/produto/{Id:guid}"
+@inject trabalho_poo.Services.EstoqueService EstoqueService
+@inject NavigationManager Navigation
+@using trabalho_poo.Models
+@using System.Linq
+
+<PageTitle>Histórico do Produto - SmartEstoque</PageTitle>
+
+@if (produto == null)
+{
+    <p>Produto não encontrado.</p>
+    <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/dashboard")'>Voltar</button>
+    return;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Detalhes: @produto.Descricao</h2>
+    <button class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/dashboard")'>
+        <span class="bi bi-arrow-left"></span> Voltar
+    </button>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <small style="color: var(--text-secondary);">Estoque Atual</small>
+            <h3 class="@(produto.ValidarEstoque() == "CRITICO" ? "text-danger" : (produto.ValidarEstoque() == "AVISO" ? "text-warning" : "text-success"))">
+                @produto.Quantidade / @produto.TetoPermitido
+            </h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <small style="color: var(--text-secondary);">Custo Médio Atual (RN03)</small>
+            <h3>@produto.CustoMedioAtual.ToString("C")</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <small style="color: var(--text-secondary);">Valor Total Estoque</small>
+            <h3>@produto.ValorTotalEstoque.ToString("C")</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <small style="color: var(--text-secondary);">Último Fornecedor</small>
+            <strong>@(!string.IsNullOrEmpty(produto.UltimoFornecedor) ? produto.UltimoFornecedor : "-")</strong>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <h4>Nova Movimentação</h4>
+    
+    @if (!string.IsNullOrEmpty(msgErroMovimentacao))
+    {
+        <div class="alert-custom alert-danger-custom mb-3">@msgErroMovimentacao</div>
+    }
+
+    <div class="row">
+        <div class="col-md-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-control" @bind="tipoNovaMovimentacao">
+                <option value="COMPRA">Entrada (Compra)</option>
+                <option value="VENDA">Saída (Venda)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Data (Retroativa Permitida)</label>
+            <input type="datetime-local" class="form-control" @bind="dataNovaMovimentacao" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Qtd</label>
+            <input type="number" class="form-control" @bind="qtdNovaMovimentacao" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Vlr Unitário</label>
+            <input type="number" class="form-control" @bind="vlrUnitNovaMovimentacao" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn-primary w-100" style="margin-bottom: 15px;" @onclick="AdicionarMovimentacao">Lançar</button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h4>Histórico de Operações (CRUD)</h4>
+    <table class="table-dark">
+        <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Tipo</th>
+                <th>Qtd</th>
+                <th>Vlr Unit</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var op in produto.HistoricoOperacoes.OrderByDescending(o => o.DataHora))
+            {
+                <tr>
+                    <td>@op.DataHora.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        @if (op is Compra) { <span class="badge-success">COMPRA</span> }
+                        else if (op is Venda) { <span class="badge-warning">VENDA</span> }
+                    </td>
+                    <td>@op.Quantidade</td>
+                    <td>@op.ValorUnitario.ToString("C")</td>
+                    <td>@op.ValorTotal.ToString("C")</td>
+                </tr>
+            }
+            @if(produto.HistoricoOperacoes.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="text-center">Nenhuma operação registrada.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private Produto? produto;
+
+    private string tipoNovaMovimentacao = "COMPRA";
+    private DateTime dataNovaMovimentacao = DateTime.Now;
+    private int qtdNovaMovimentacao = 1;
+    private decimal vlrUnitNovaMovimentacao = 0;
+    
+    private string msgErroMovimentacao = "";
+
+    protected override void OnInitialized()
+    {
+        if (!EstoqueService.IsLogado)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        produto = EstoqueService.Produtos.FirstOrDefault(p => p.Id == Id);
+    }
+
+    private void AdicionarMovimentacao()
+    {
+        msgErroMovimentacao = "";
+
+        if (qtdNovaMovimentacao <= 0)
+        {
+            msgErroMovimentacao = "A quantidade deve ser maior que zero.";
+            return;
+        }
+
+        if (tipoNovaMovimentacao == "COMPRA")
+        {
+            // Valida Teto
+            if (produto!.Quantidade + qtdNovaMovimentacao > produto.TetoPermitido)
+            {
+                msgErroMovimentacao = $"Não é possível comprar esta quantidade. O teto máximo é {produto.TetoPermitido}.";
+                return;
+            }
+
+            var compra = new Compra()
+            {
+                DataHora = dataNovaMovimentacao,
+                Quantidade = qtdNovaMovimentacao,
+                ValorUnitario = vlrUnitNovaMovimentacao
+            };
+            produto.HistoricoOperacoes.Add(compra);
+            produto.Quantidade += qtdNovaMovimentacao;
+        }
+        else if (tipoNovaMovimentacao == "VENDA")
+        {
+            // RN05: Não permitir venda de produtos zerados / não permitir ficar negativo
+            if (produto!.Quantidade == 0 || (produto.Quantidade - qtdNovaMovimentacao < 0))
+            {
+                msgErroMovimentacao = "Venda não permitida. Estoque insuficiente.";
+                return;
+            }
+
+            var venda = new Venda()
+            {
+                DataHora = dataNovaMovimentacao,
+                Quantidade = qtdNovaMovimentacao,
+                ValorUnitario = vlrUnitNovaMovimentacao
+            };
+            produto.HistoricoOperacoes.Add(venda);
+            produto.Quantidade -= qtdNovaMovimentacao;
+        }
+
+        produto!.CalcularCustoMedio();
+        
+        // Reset campos
+        qtdNovaMovimentacao = 1;
+        vlrUnitNovaMovimentacao = 0;
+        dataNovaMovimentacao = DateTime.Now;
+    }
+
+    }
+}

@@ -1,0 +1,172 @@
+@page "/produtos-criticos"
+@inject trabalho_poo.Services.EstoqueService EstoqueService
+@inject NavigationManager Navigation
+@using trabalho_poo.Models
+@using System.Linq
+
+<PageTitle>Produtos em Atenção - SmartEstoque</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Estoque Crítico / Em Aviso</h2>
+    <button class="btn-primary" @onclick='() => Navigation.NavigateTo("/dashboard")'>
+        <span class="bi bi-arrow-left"></span> Voltar
+    </button>
+</div>
+
+@if (!EstoqueService.IsLogado)
+{
+    <p>Acesso Negado.</p>
+    return;
+}
+
+<div class="card">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Buscar (Live Share / Search)</label>
+            <input type="text" class="form-control" placeholder="Descrição..." @bind="termoBusca" @bind:event="oninput" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Filtrar por Tipo</label>
+            <select class="form-control" @bind="filtroTipo">
+                <option value="">Todos</option>
+                @foreach (var tipo in tiposUnicos)
+                {
+                    <option value="@tipo">@tipo</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Ordenar por</label>
+            <select class="form-control" @bind="ordemBusca">
+                <option value="Descricao">Descrição</option>
+                <option value="Valor">Valor Unitário</option>
+                <option value="Quantidade">Quantidade</option>
+            </select>
+        </div>
+    </div>
+
+    @if (produtosFiltrados.Count == 0)
+    {
+        <p style="color: var(--text-secondary);">Nenhum produto atende aos critérios.</p>
+    }
+    else
+    {
+        <table class="table-dark">
+            <thead>
+                <tr>
+                    <th>ID / Produto</th>
+                    <th>Qtd Restante</th>
+                    <th>Última Compra</th>
+                    <th>Valor Unit (Médio)</th>
+                    <th>Valor Total</th>
+                    <th>Fornecedor</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in produtosFiltrados)
+                {
+                    var ultimaCompra = p.HistoricoOperacoes.OfType<Compra>().OrderByDescending(c => c.DataHora).FirstOrDefault();
+                    string qtdUltima = ultimaCompra != null ? ultimaCompra.Quantidade.ToString() : "-";
+                    string valUltima = ultimaCompra != null ? ultimaCompra.ValorTotal.ToString("C") : "-";
+
+                    <tr style="cursor: pointer;" @onclick='() => Navigation.NavigateTo($"/produto/{p.Id}")'>
+                        <td>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">@p.Id.ToString().Substring(0,8)...</div>
+                            <strong>@p.Descricao</strong><br/>
+                            <small style="color: var(--text-secondary);">@p.Tipo</small>
+                        </td>
+                        <td>
+                            @{
+                                string status = p.ValidarEstoque();
+                                string bClass = status == "CRITICO" ? "badge-danger" : "badge-warning";
+                            }
+                            <span class="@bClass">@p.Quantidade</span>
+                        </td>
+                        <td>
+                            Qtd: @qtdUltima<br/>
+                            Total: @valUltima
+                        </td>
+                        <td>@p.CustoMedioAtual.ToString("C")</td>
+                        <td>@p.ValorTotalEstoque.ToString("C")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(p.UltimoFornecedor))
+                            {
+                                <div>@p.UltimoFornecedor</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">CNPJ: @p.UltimoFornecedorCNPJ</div>
+                            }
+                            else
+                            {
+                                <span>-</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<Produto> produtosAbaixoNivel = new();
+    
+    // Filtros
+    private string _termoBusca = "";
+    private string termoBusca 
+    { 
+        get => _termoBusca; 
+        set { _termoBusca = value; AplicarFiltros(); } 
+    }
+
+    private string _filtroTipo = "";
+    private string filtroTipo
+    {
+        get => _filtroTipo;
+        set { _filtroTipo = value; AplicarFiltros(); }
+    }
+
+    private string _ordemBusca = "Descricao";
+    private string ordemBusca
+    {
+        get => _ordemBusca;
+        set { _ordemBusca = value; AplicarFiltros(); }
+    }
+
+    private List<Produto> produtosFiltrados = new();
+    private List<string> tiposUnicos = new();
+
+    protected override void OnInitialized()
+    {
+        if (!EstoqueService.IsLogado) return;
+
+        // Pega somente <= 40%
+        produtosAbaixoNivel = EstoqueService.Produtos.Where(p => p.ValidarEstoque() != "NORMAL").ToList();
+        
+        tiposUnicos = EstoqueService.Produtos.Select(p => p.Tipo).Distinct().ToList();
+        
+        AplicarFiltros();
+    }
+
+    private void AplicarFiltros()
+    {
+        var query = produtosAbaixoNivel.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(termoBusca))
+        {
+            query = query.Where(p => p.Descricao.Contains(termoBusca, System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtroTipo))
+        {
+            query = query.Where(p => p.Tipo == filtroTipo);
+        }
+
+        if (ordemBusca == "Descricao")
+            query = query.OrderBy(p => p.Descricao);
+        else if (ordemBusca == "Valor")
+            query = query.OrderByDescending(p => p.CustoMedioAtual);
+        else if (ordemBusca == "Quantidade")
+            query = query.OrderBy(p => p.Quantidade);
+
+        produtosFiltrados = query.ToList();
+    }
+}
