@@ -15,10 +15,4 @@ public class EstoqueService
 
     // Controle de alertas críticos já reconhecidos (não repete popup)
     public HashSet<Guid> AlertasCriticosReconhecidos { get; set; } = new HashSet<Guid>();
-
-    public EstoqueService()
-    {
-        // Produtos MOCK para testar as listagens de cara se necessário, 
-        // mas vamos deixar vazio para o usuário cadastrar e ver a lógica.
-    }
 }
