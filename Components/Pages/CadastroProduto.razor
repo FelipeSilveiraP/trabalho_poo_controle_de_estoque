@@ -52,15 +52,15 @@
                 <input class="form-control" @bind="novoTipo" />
             </div>
             <div class="col-md-4">
-                <label class="form-label">Quantidade Comprada</label>
+                <label class="form-label">Quantidade Comprada (unid)</label>
                 <input type="number" class="form-control" @bind="novaQuantidade" />
             </div>
             <div class="col-md-4">
-                <label class="form-label">Valor Total da Compra</label>
+                <label class="form-label">Valor Total da Compra (R$)</label>
                 <input type="number" class="form-control" @bind="novoValorTotal" />
             </div>
             <div class="col-md-4">
-                <label class="form-label">Teto Permitido em Estoque</label>
+                <label class="form-label">Teto Permitido em Estoque (unid)</label>
                 <input type="number" class="form-control" @bind="novoTeto" />
             </div>
         </div>
@@ -77,7 +77,7 @@ else if (modoCadastro == "EXISTENTE")
         @if (produtoSelecionado == null)
         {
             <div class="mb-3 mt-3">
-                <label class="form-label">Busca (Live Share / Live Search)</label>
+                <label class="form-label">digite seu produto</label>
                 <input type="text" class="form-control" placeholder="Buscar por descrição..." @bind="buscaExistente" @bind:event="oninput" />
             </div>
 
@@ -126,11 +126,11 @@ else if (modoCadastro == "EXISTENTE")
                     <input class="form-control" @bind="novoCNPJ" oninput="maskCnpj(this)" maxlength="18" placeholder="00.000.000/0000-00" />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Quantidade Comprada</label>
+                    <label class="form-label">Quantidade Comprada (unid)</label>
                     <input type="number" class="form-control" @bind="novaQuantidade" />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Valor Total da Compra</label>
+                    <label class="form-label">Valor Total da Compra (R$)</label>
                     <input type="number" class="form-control" @bind="novoValorTotal" />
                 </div>
             </div>
@@ -159,6 +159,22 @@ else if (modoCadastro == "EXISTENTE")
     </div>
 }
 
+<!-- Modal de Teto Excedido -->
+@if (mostrarPopupTetoExcedido)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <span class="bi bi-exclamation-triangle" style="color: var(--accent); font-size: 3rem; margin-bottom: 15px; display: inline-block;"></span>
+            <h3>Atenção: Teto Máximo Ultrapassado</h3>
+            <p style="font-size: 1.1rem; margin-bottom: 25px;">Esta compra fará com que o estoque ultrapasse o teto máximo permitido! Isso pode comprometer a infraestrutura do estoque e dificultar o fluxo de vendas.<br><br>Tem certeza de que deseja manter a compra?</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <button class="btn btn-secondary" style="width: 45%;" @onclick="CancelarTetoExcedido">Cancelar Compra</button>
+                <button class="btn-primary" style="width: 45%;" @onclick="ConfirmarTetoExcedido">Sim, Manter Compra</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private string modoCadastro = "NOVO";
 
@@ -177,6 +193,7 @@ else if (modoCadastro == "EXISTENTE")
 
     // Popups
     private bool mostrarPopupConfirmacaoNovo = false;
+    private bool mostrarPopupTetoExcedido = false;
 
     private void SetModo(string modo)
     {
@@ -218,6 +235,13 @@ else if (modoCadastro == "EXISTENTE")
     private void ConfirmarNovoSalvar()
     {
         if (string.IsNullOrWhiteSpace(novaDescricao) || novoTeto <= 0) return;
+        
+        if (novaQuantidade > novoTeto)
+        {
+            mostrarPopupTetoExcedido = true;
+            return;
+        }
+
         mostrarPopupConfirmacaoNovo = true;
     }
 
@@ -266,6 +290,17 @@ else if (modoCadastro == "EXISTENTE")
     {
         if (produtoSelecionado == null || novaQuantidade <= 0) return;
 
+        if (produtoSelecionado.Quantidade + novaQuantidade > produtoSelecionado.TetoPermitido)
+        {
+            mostrarPopupTetoExcedido = true;
+            return;
+        }
+
+        EfetivarSalvarExistente();
+    }
+
+    private void EfetivarSalvarExistente()
+    {
         // Instanciação do tipo ProdutoExistente que usa Override
         ProdutoExistente pe = new ProdutoExistente()
         {
@@ -288,5 +323,25 @@ else if (modoCadastro == "EXISTENTE")
         pe.Salvar(EstoqueService.Produtos);
 
         Navigation.NavigateTo("/dashboard");
+    }
+
+    // --- CONTROLE POPUP TETO EXCEDIDO ---
+    private void CancelarTetoExcedido()
+    {
+        mostrarPopupTetoExcedido = false;
+    }
+
+    private void ConfirmarTetoExcedido()
+    {
+        mostrarPopupTetoExcedido = false;
+        
+        if (modoCadastro == "NOVO")
+        {
+            mostrarPopupConfirmacaoNovo = true;
+        }
+        else if (modoCadastro == "EXISTENTE")
+        {
+            EfetivarSalvarExistente();
+        }
     }
 }

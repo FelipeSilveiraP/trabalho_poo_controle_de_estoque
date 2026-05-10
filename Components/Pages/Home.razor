@@ -18,16 +18,18 @@
             </div>
         }
 
-        <div style="margin-bottom: 20px;">
-            <label class="form-label">Usuário</label>
-            <input type="text" class="form-control" @bind="usuarioInput" placeholder="admin" />
-        </div>
-        <div style="margin-bottom: 30px;">
-            <label class="form-label">Senha</label>
-            <input type="password" class="form-control" @bind="senhaInput" placeholder="******" />
-        </div>
-        
-        <button class="btn-primary" style="width: 100%; font-size: 1.1rem; padding: 12px;" @onclick="Entrar">Entrar no Sistema</button>
+        <form @onsubmit="Entrar" @onsubmit:preventDefault="true">
+            <div style="margin-bottom: 20px;">
+                <label class="form-label">Usuário</label>
+                <input type="text" class="form-control" @bind="usuarioInput" @bind:event="oninput" placeholder="admin" />
+            </div>
+            <div style="margin-bottom: 30px;">
+                <label class="form-label">Senha</label>
+                <input type="password" class="form-control" @bind="senhaInput" @bind:event="oninput" placeholder="******" />
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%; font-size: 1.1rem; padding: 12px;">Entrar no Sistema</button>
+        </form>
     </div>
 </div>
 

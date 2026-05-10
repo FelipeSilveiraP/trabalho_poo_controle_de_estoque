@@ -88,7 +88,7 @@
                         <td><span class="@badgeClass">@statusStr</span></td>
                         <td style="display: flex; gap: 5px;">
                             <button class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" @onclick:stopPropagation="true" @onclick='() => Navigation.NavigateTo($"/produto/{p.Id}")'>Detalhes</button>
-                            <button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" @onclick:stopPropagation="true" @onclick="() => ConfirmarExclusaoProduto(p)">🗑️</button>
+                            <button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" @onclick:stopPropagation="true" @onclick="() => ConfirmarExclusaoProduto(p)"><span class="bi bi-trash"></span></button>
                         </td>
                     </tr>
                 }
@@ -117,7 +117,7 @@
 {
     <div class="modal-overlay">
         <div class="modal-content">
-            <span style="font-size: 3rem; margin-bottom: 15px; display: inline-block;">🗑️</span>
+            <span class="bi bi-trash" style="color: var(--danger); font-size: 3rem; margin-bottom: 15px; display: inline-block;"></span>
             <h3>Excluir Produto</h3>
             <p style="font-size: 1.1rem; margin-bottom: 25px;">Tem certeza que deseja excluir o produto "@produtoParaExcluir.Descricao"? Todo o histórico será perdido.</p>
             <div class="d-flex gap-2 justify-content-center">

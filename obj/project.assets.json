@@ -8,19 +8,19 @@
     "net9.0": []
   },
   "packageFolders": {
-    "C:\\Users\\felip\\.nuget\\packages\\": {}
+    "C:\\Users\\rael_\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\FATEC FUKUTA\\trabalho_poo\\trabalho_poo.csproj",
+      "projectUniqueName": "C:\\trabalho_poo_controle_de_estoque\\trabalho_poo.csproj",
       "projectName": "trabalho_poo",
-      "projectPath": "C:\\FATEC FUKUTA\\trabalho_poo\\trabalho_poo.csproj",
-      "packagesPath": "C:\\Users\\felip\\.nuget\\packages\\",
-      "outputPath": "C:\\FATEC FUKUTA\\trabalho_poo\\obj\\",
+      "projectPath": "C:\\trabalho_poo_controle_de_estoque\\trabalho_poo.csproj",
+      "packagesPath": "C:\\Users\\rael_\\.nuget\\packages\\",
+      "outputPath": "C:\\trabalho_poo_controle_de_estoque\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\felip\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\rael_\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -68,7 +68,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.313/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
